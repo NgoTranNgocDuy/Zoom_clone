@@ -40,17 +40,47 @@ const CallList = ({ type }: { type: 'ended' | 'upcoming' | 'recordings' }) => {
     }
   };
 
+  // useEffect(() => {
+  //   const fetchRecordings = async () => {
+  //     const callData = await Promise.all(
+  //       callRecordings?.map((meeting) => meeting.queryRecordings()) ?? [],
+  //     );
+
+  //     const recordings = callData
+  //       .filter((call) => call.recordings.length > 0)
+  //       .flatMap((call) => call.recordings);
+
+  //     setRecordings(recordings);
+  //   };
   useEffect(() => {
     const fetchRecordings = async () => {
-      const callData = await Promise.all(
-        callRecordings?.map((meeting) => meeting.queryRecordings()) ?? [],
-      );
+      const maxRetries = 5;
+      let attempt = 0;
 
-      const recordings = callData
-        .filter((call) => call.recordings.length > 0)
-        .flatMap((call) => call.recordings);
+      const fetchWithRetry = async () => {
+        try {
+          const callData = await Promise.all(
+            callRecordings?.map((meeting) => meeting.queryRecordings()) ?? [],
+          );
 
-      setRecordings(recordings);
+          const recordings = callData
+            .filter((call) => call.recordings.length > 0)
+            .flatMap((call) => call.recordings);
+
+          setRecordings(recordings);
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('Too many requests') && attempt < maxRetries) {
+            attempt++;
+            const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+            console.warn(`Rate limit hit, retrying in ${delay / 1000} seconds...`);
+            setTimeout(fetchWithRetry, delay);
+          } else {
+            console.error('Error fetching recordings:', error);
+          }
+        }
+      };
+
+      fetchWithRetry();
     };
 
     if (type === 'recordings') {
@@ -68,7 +98,7 @@ const CallList = ({ type }: { type: 'ended' | 'upcoming' | 'recordings' }) => {
       {calls && calls.length > 0 ? (
         calls.map((meeting: Call | CallRecording) => (
           <MeetingCard
-            key={(meeting as Call).id}
+            key={(meeting as Call).id || (meeting as CallRecording).filename}
             icon={
               type === 'ended'
                 ? '/icons/previous.svg'
