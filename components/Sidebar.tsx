@@ -7,6 +7,7 @@ import { sidebarLinks } from '@/constants';
 import { cn } from '@/lib/utils';
 
 const Sidebar = () => {
+    // define whihc path we are currently on
   const pathname = usePathname();
 
   return (
@@ -19,6 +20,7 @@ const Sidebar = () => {
             <Link
               href={item.route}
               key={item.label}
+                className={cn(
                 'flex gap-4 items-center p-4 rounded-lg justify-start',
                 {
                   'bg-blue-1': isActive,
