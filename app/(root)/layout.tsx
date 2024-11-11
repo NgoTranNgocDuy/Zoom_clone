@@ -1,11 +1,13 @@
-import React from 'react'
-// This will do some specific things to every single page
-const RootLayout = ({children}: {children: React.ReactNode}) => {
+import { ReactNode } from 'react';
+
+import StreamVideoProvider from '@/providers/StreamClientProvider';
+
+const RootLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
   return (
     <main>
-        {children}
+      <StreamVideoProvider>{children}</StreamVideoProvider>
     </main>
-  )
-}
+  );
+};
 
-export default RootLayout
+export default RootLayout;
